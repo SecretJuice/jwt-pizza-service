@@ -7,7 +7,6 @@ services:
     restart: always
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_PASSWORD} 
-      MYSQL_DATABASE: pizza
     ports:
       - "3306:3306"
     # (this is just an example, not intended to be a production configuration)
