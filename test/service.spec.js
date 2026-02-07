@@ -99,4 +99,24 @@ describe('user', () => {
     expect(meRes.body.name).toBe(testUser.name);
     expect(meRes.body.roles).toMatchObject([{ role: 'diner' }]);
   });
+
+  test('update', async () => {
+    const loginRes = await request(app).put('/api/auth').send(testUser);
+    const token = loginRes.body.token;
+
+    const meRes = await request(app).get('/api/user/me').set('Authorization', `Bearer ${token}`);
+    const userId = meRes.body.id;
+
+    const updatedName = `updated-${randomName()}`;
+    const updateRes = await request(app)
+      .put(`/api/user/${userId}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ name: updatedName, email: testUser.email, password: testUser.password });
+
+    expect(updateRes.status).toBe(200);
+    expect(updateRes.body.user).toMatchObject({ id: userId, name: updatedName, email: testUser.email });
+    expect(updateRes.body.token).toMatch(/^[a-zA-Z0-9\-_]*\.[a-zA-Z0-9\-_]*\.[a-zA-Z0-9\-_]*$/);
+
+    testUser.name = updatedName;
+  });
 });
