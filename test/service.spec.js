@@ -33,7 +33,7 @@ function randomName() {
 const testUser = { name: 'pizza diner', email: 'reg@test.com', password: 'a' };
 let testUserAuthToken;
 
-beforeAll(async () => {
+beforeEach(async () => {
   testUser.email = randomName() + '@test.com';
   const registerRes = await request(app).post('/api/auth').send(testUser);
   testUserAuthToken = registerRes.body.token;
@@ -88,5 +88,15 @@ describe('base', () => {
   test('docs', async () => {
     const rootRes = await request(app).get('/api/docs').send();
     expect(rootRes.body.version).toBe(version.version);
+  });
+});
+
+describe('user', () => {
+  test('me', async () => {
+    const meRes = await request(app).get('/api/user/me').set('Authorization', `Bearer ${testUserAuthToken}`);
+    expect(meRes.status).toBe(200);
+    expect(meRes.body.email).toBe(testUser.email);
+    expect(meRes.body.name).toBe(testUser.name);
+    expect(meRes.body.roles).toMatchObject([{ role: 'diner' }]);
   });
 });
