@@ -120,3 +120,86 @@ describe('user', () => {
     testUser.name = updatedName;
   });
 });
+
+describe('order', () => {
+  let adminToken;
+  let menuItemId;
+  let originalFetch;
+
+  async function ensureMenuItem() {
+    if (menuItemId) return menuItemId;
+
+    const menuItem = {
+      title: `Test-${randomName()}`,
+      description: 'Test item',
+      image: 'pizza-test.png',
+      price: 0.01,
+    };
+
+    const addRes = await request(app)
+      .put('/api/order/menu')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send(menuItem);
+    expect(addRes.status).toBe(200);
+    const added = addRes.body.find((item) => item.title === menuItem.title);
+    menuItemId = added?.id;
+    return menuItemId;
+  }
+
+  beforeAll(async () => {
+    const adminUser = await createAdminUser();
+    const loginRes = await request(app).put('/api/auth').send(adminUser);
+    adminToken = loginRes.body.token;
+
+    originalFetch = global.fetch;
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ reportUrl: 'https://example.com/report', jwt: 'factory-jwt' }),
+    });
+  });
+
+  afterAll(() => {
+    global.fetch = originalFetch;
+  });
+
+  test('menu', async () => {
+    const menuRes = await request(app).get('/api/order/menu').send();
+    expect(menuRes.status).toBe(200);
+    expect(Array.isArray(menuRes.body)).toBe(true);
+  });
+
+  test('add menu item', async () => {
+    const id = await ensureMenuItem();
+    expect(id).toBeDefined();
+  });
+
+  test('get orders', async () => {
+    const loginRes = await request(app).put('/api/auth').send(testUser);
+    const token = loginRes.body.token;
+
+    const ordersRes = await request(app).get('/api/order').set('Authorization', `Bearer ${token}`);
+    expect(ordersRes.status).toBe(200);
+    expect(ordersRes.body).toHaveProperty('orders');
+    expect(Array.isArray(ordersRes.body.orders)).toBe(true);
+  });
+
+  test('create order', async () => {
+    const loginRes = await request(app).put('/api/auth').send(testUser);
+    const token = loginRes.body.token;
+
+    const id = await ensureMenuItem();
+    const orderRes = await request(app)
+      .post('/api/order')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        franchiseId: 1,
+        storeId: 1,
+        items: [{ menuId: id, description: 'Test item', price: 0.01 }],
+      });
+
+    expect(orderRes.status).toBe(200);
+    expect(orderRes.body.order).toBeDefined();
+    expect(orderRes.body.order.items).toMatchObject([{ menuId: id, description: 'Test item', price: 0.01 }]);
+    expect(orderRes.body.jwt).toBeDefined();
+  });
+});
