@@ -1,6 +1,18 @@
 const request = require('supertest');
 const app = require('../src/service');
 
+// async function createAdminUser() {
+//   let user = { password: 'toomanysecrets', roles: [{ role: Role.Admin }] };
+//   user.name = randomName();
+//   user.email = user.name + '@admin.com';
+//
+//   await DB.addUser(user);
+//   user.password = 'toomanysecrets';
+//
+//   return user;
+// }
+
+
 const testUser = { name: 'pizza diner', email: 'reg@test.com', password: 'a' };
 let testUserAuthToken;
 
@@ -17,5 +29,10 @@ test('login', async () => {
 
   const { password, ...user } = { ...testUser, roles: [{ role: 'diner' }] };
   expect(loginRes.body.user).toMatchObject(user);
+  expect(password).toBe(password)
 });
+
+test('bleh', async () => {
+  expect(testUserAuthToken).toMatch(/^[a-zA-Z0-9\-_]*\.[a-zA-Z0-9\-_]*\.[a-zA-Z0-9\-_]*$/);
+})
 

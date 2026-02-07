@@ -1,5 +1,6 @@
 {
   "collectCoverage": true,
-  "testMatch": ["<rootDir>/test/**/*.test.js"],
+  "testMatch": ["<rootDir>/test/**/*.spec.js"],
+  "coverageReporters": ["json-summary", "text"],
   "testEnvironment": "node"
 }
