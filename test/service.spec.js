@@ -208,3 +208,14 @@ describe('order', () => {
     expect(orderRes.body.jwt).toBe('factory-jwt');
   });
 });
+
+describe('franchise', () => {
+  test('list franchises', async () => {
+    const res = await request(app).get('/api/franchise').send();
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty('franchises');
+    expect(Array.isArray(res.body.franchises)).toBe(true);
+    expect(res.body).toHaveProperty('more');
+    console.log(res.body)
+  });
+});
