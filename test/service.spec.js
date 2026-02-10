@@ -14,6 +14,17 @@ async function createAdminUser() {
   return user;
 }
 
+// async function createFranchiseeUser() {
+//   let user = { password: 'toomanysecrets', roles: [{ role: Role.Franchisee, object: 'pizzaPocket'  }] };
+//   user.name = randomName();
+//   user.email = user.name + '@franchisee.com';
+//
+//   await DB.addUser(user);
+//   user.password = 'toomanysecrets';
+//
+//   return user;
+// }
+
 function randomName() {
   return Math.random().toString(36).substring(2, 12)
 }
@@ -205,6 +216,7 @@ describe('franchise', () => {
     expect(res.body).toHaveProperty('franchises');
     expect(Array.isArray(res.body.franchises)).toBe(true);
     expect(res.body).toHaveProperty('more');
+    console.log(res.body)
   });
 
   test('list user franchises', async () => {
@@ -217,5 +229,65 @@ describe('franchise', () => {
     const res = await request(app).get(`/api/franchise/${userId}`).set('Authorization', `Bearer ${token}`);
     expect(res.status).toBe(200);
     expect(Array.isArray(res.body)).toBe(true);
+    
+  });
+
+  test('create franchise', async () => {
+    const adminUser = await createAdminUser();
+    const loginRes = await request(app).put('/api/auth').send(adminUser);
+    const token = loginRes.body.token;
+
+    const franchiseName = `franchise-${randomName()}`;
+    const res = await request(app)
+      .post('/api/franchise')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ name: franchiseName, admins: [{ email: adminUser.email }] });
+
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({ name: franchiseName });
+    expect(res.body.admins).toEqual(
+      expect.arrayContaining([expect.objectContaining({ email: adminUser.email })])
+    );
+    expect(res.body.id).toBeDefined();
+  });
+
+  test('delete franchise', async () => {
+    const adminUser = await createAdminUser();
+    const loginRes = await request(app).put('/api/auth').send(adminUser);
+    const token = loginRes.body.token;
+
+    const franchiseName = `franchise-${randomName()}`;
+    const createRes = await request(app)
+      .post('/api/franchise')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ name: franchiseName, admins: [{ email: adminUser.email }] });
+    const franchiseId = createRes.body.id;
+
+    const deleteRes = await request(app).delete(`/api/franchise/${franchiseId}`).send();
+    expect(deleteRes.status).toBe(200);
+    expect(deleteRes.body).toMatchObject({ message: 'franchise deleted' });
+  });
+
+  test('create store', async () => {
+    const adminUser = await createAdminUser();
+    const loginRes = await request(app).put('/api/auth').send(adminUser);
+    const token = loginRes.body.token;
+
+    const franchiseName = `franchise-${randomName()}`;
+    const franchiseRes = await request(app)
+      .post('/api/franchise')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ name: franchiseName, admins: [{ email: adminUser.email }] });
+
+    const franchiseId = franchiseRes.body.id;
+    const storeName = `store-${randomName()}`;
+    const storeRes = await request(app)
+      .post(`/api/franchise/${franchiseId}/store`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ franchiseId, name: storeName });
+
+    expect(storeRes.status).toBe(200);
+    expect(storeRes.body).toMatchObject({ name: storeName });
+    expect(storeRes.body.id).toBeDefined();
   });
 });
