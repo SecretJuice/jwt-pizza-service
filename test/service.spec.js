@@ -171,6 +171,11 @@ describe('order', () => {
   test('add menu item', async () => {
     const id = await ensureMenuItem();
     expect(id).toBeDefined();
+
+    const menuRes = await request(app).get('/api/order/menu').send();
+    expect(menuRes.status).toBe(200);
+    expect(Array.isArray(menuRes.body)).toBe(true);
+    expect(menuRes.body.find((item) => item.id === id)).not.toBeNull();
   });
 
   test('get orders', async () => {
@@ -200,6 +205,6 @@ describe('order', () => {
     expect(orderRes.status).toBe(200);
     expect(orderRes.body.order).toBeDefined();
     expect(orderRes.body.order.items).toMatchObject([{ menuId: id, description: 'Test item', price: 0.01 }]);
-    expect(orderRes.body.jwt).toBeDefined();
+    expect(orderRes.body.jwt).toBe('factory-jwt');
   });
 });
