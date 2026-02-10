@@ -3,17 +3,6 @@ const app = require('../src/service');
 const version = require('../src/version.json');
 const { Role, DB } = require('../src/database/database.js');
 
-// async function createAdminUser() {
-//   let user = { password: 'toomanysecrets', roles: [{ role: Role.Admin }] };
-//   user.name = randomName();
-//   user.email = user.name + '@admin.com';
-//
-//   await DB.addUser(user);
-//   user.password = 'toomanysecrets';
-//
-//   return user;
-// }
-
 async function createAdminUser() {
   let user = { password: 'toomanysecrets', roles: [{ role: Role.Admin }] };
   user.name = randomName();
@@ -216,6 +205,17 @@ describe('franchise', () => {
     expect(res.body).toHaveProperty('franchises');
     expect(Array.isArray(res.body.franchises)).toBe(true);
     expect(res.body).toHaveProperty('more');
-    console.log(res.body)
+  });
+
+  test('list user franchises', async () => {
+    const loginRes = await request(app).put('/api/auth').send(testUser);
+    const token = loginRes.body.token;
+
+    const meRes = await request(app).get('/api/user/me').set('Authorization', `Bearer ${token}`);
+    const userId = meRes.body.id;
+
+    const res = await request(app).get(`/api/franchise/${userId}`).set('Authorization', `Bearer ${token}`);
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body)).toBe(true);
   });
 });
