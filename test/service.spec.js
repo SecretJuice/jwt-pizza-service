@@ -216,7 +216,6 @@ describe('franchise', () => {
     expect(res.body).toHaveProperty('franchises');
     expect(Array.isArray(res.body.franchises)).toBe(true);
     expect(res.body).toHaveProperty('more');
-    console.log(res.body)
   });
 
   test('list user franchises', async () => {
@@ -289,5 +288,32 @@ describe('franchise', () => {
     expect(storeRes.status).toBe(200);
     expect(storeRes.body).toMatchObject({ name: storeName });
     expect(storeRes.body.id).toBeDefined();
+  });
+
+  test('delete store', async () => {
+    const adminUser = await createAdminUser();
+    const loginRes = await request(app).put('/api/auth').send(adminUser);
+    const token = loginRes.body.token;
+
+    const franchiseName = `franchise-${randomName()}`;
+    const franchiseRes = await request(app)
+      .post('/api/franchise')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ name: franchiseName, admins: [{ email: adminUser.email }] });
+
+    const franchiseId = franchiseRes.body.id;
+    const storeName = `store-${randomName()}`;
+    const storeRes = await request(app)
+      .post(`/api/franchise/${franchiseId}/store`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ franchiseId, name: storeName });
+
+    const storeId = storeRes.body.id;
+    const deleteRes = await request(app)
+      .delete(`/api/franchise/${franchiseId}/store/${storeId}`)
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(deleteRes.status).toBe(200);
+    expect(deleteRes.body).toMatchObject({ message: 'store deleted' });
   });
 });
