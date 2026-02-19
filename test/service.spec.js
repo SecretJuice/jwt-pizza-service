@@ -129,6 +129,10 @@ describe('user', () => {
     testUser.name = updatedName;
   });
   test('list users', async () => {
+
+    const unauthorizedRes = await request(app).get('/api/user').set('Authorization', `Bearer ${testUserAuthToken}`);
+    expect(unauthorizedRes.status).toBe(403);
+
     const listUsersRes = await request(app).get('/api/user').set('Authorization', `Bearer ${adminToken}`);
     expect(listUsersRes.status).toBe(200);
   });
