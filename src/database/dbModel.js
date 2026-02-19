@@ -36,7 +36,7 @@ const tableCreateStatements = [
     userId INT NOT NULL,
     role VARCHAR(255) NOT NULL,
     objectId INT NOT NULL,
-    FOREIGN KEY (userId) REFERENCES user(id),
+    FOREIGN KEY (userId) REFERENCES user(id) ON DELETE CASCADE,
     INDEX (objectId)
   )`,
 

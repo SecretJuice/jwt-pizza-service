@@ -133,7 +133,7 @@ class DB {
   async deleteUser(id) {
     const connection = await this.getConnection();
     try {
-      await this.query(connection, `DELETE FROM user WHERE id=? CASCADE`, [id])
+      await this.query(connection, `DELETE FROM user WHERE id=?`, [id])
     } catch (e) {
       console.error('QUERY ERROR: ', e)
       throw e;

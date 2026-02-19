@@ -183,7 +183,7 @@ describe('user', () => {
   test('delete user', async () => {
     const testUser = await createDinerUser();
 
-    const unauthorizedRes = await request(app).delete('/api/user/' + testUser.name).set('Authorization', `Bearer ${testUserAuthToken}`);
+    const unauthorizedRes = await request(app).delete('/api/user/' + testUser.id).set('Authorization', `Bearer ${testUserAuthToken}`);
     expect(unauthorizedRes.status).toBe(403);
 
     const deleteRes = await request(app).delete('/api/user/' + testUser.id).set('Authorization', `Bearer ${adminToken}`);

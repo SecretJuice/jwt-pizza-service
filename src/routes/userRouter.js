@@ -80,7 +80,7 @@ userRouter.delete(
       }
       const userId = Number(req.params.userId);
       await DB.deleteUser(userId)
-      res.status(200);
+      res.status(200).end();
   })
 );
 
