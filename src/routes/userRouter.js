@@ -78,7 +78,9 @@ userRouter.delete(
       if (!user.isRole(Role.Admin)) {
           return res.status(403).json({ message: 'unauthorized' });
       }
-      res.json({ message: 'not implemented' });
+      const userId = Number(req.params.userId);
+      await DB.deleteUser(userId)
+      res.status(200);
   })
 );
 

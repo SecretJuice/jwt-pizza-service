@@ -22,7 +22,7 @@ async function createDinerUser() {
     name: name,
     email: name + '@diner.com'
   }
-  await DB.addUser(user);
+  user.id = (await DB.addUser(user)).id;
 
   return user;
 }
@@ -186,7 +186,7 @@ describe('user', () => {
     const unauthorizedRes = await request(app).delete('/api/user/' + testUser.name).set('Authorization', `Bearer ${testUserAuthToken}`);
     expect(unauthorizedRes.status).toBe(403);
 
-    const deleteRes = await request(app).delete('/api/user/' + testUser.name).set('Authorization', `Bearer ${adminToken}`);
+    const deleteRes = await request(app).delete('/api/user/' + testUser.id).set('Authorization', `Bearer ${adminToken}`);
     expect(deleteRes.status).toBe(200);
 
     const tryGetRes = await request(app).get(`/api/user?name=${testUser.name}`).set('Authorization', `Bearer ${adminToken}`);

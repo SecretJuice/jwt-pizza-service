@@ -130,6 +130,18 @@ class DB {
     }
   }
 
+  async deleteUser(id) {
+    const connection = await this.getConnection();
+    try {
+      await this.query(connection, `DELETE FROM user WHERE id=? CASCADE`, [id])
+    } catch (e) {
+      console.error('QUERY ERROR: ', e)
+      throw e;
+    }finally {
+      connection.end();
+    }
+  }
+
   async getUsers(name = "", page = 1, limit = config.db.listPerPage) {
     const connection = await this.getConnection();
     try {
