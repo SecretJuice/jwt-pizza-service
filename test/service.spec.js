@@ -119,6 +119,10 @@ describe('user', () => {
 
     testUser.name = updatedName;
   });
+  test('list users', async () => {
+    const listUsersRes = await request(app).get('/api/user').set('Authorization', `Bearer ${testUserAuthToken}`);
+    expect(listUsersRes.status).toBe(200);
+  });
 });
 
 describe('order', () => {
