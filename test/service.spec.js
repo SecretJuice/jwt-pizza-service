@@ -37,6 +37,7 @@ beforeEach(async () => {
   testUser.email = randomName() + '@test.com';
   const registerRes = await request(app).post('/api/auth').send(testUser);
   testUserAuthToken = registerRes.body.token;
+
 });
 
 describe('auth', () => {
@@ -92,6 +93,14 @@ describe('base', () => {
 });
 
 describe('user', () => {
+  let adminToken;
+
+  beforeAll(async () => {
+    const adminUser = await createAdminUser();
+    const loginRes = await request(app).put('/api/auth').send(adminUser);
+    adminToken = loginRes.body.token;
+  });
+
   test('me', async () => {
     const meRes = await request(app).get('/api/user/me').set('Authorization', `Bearer ${testUserAuthToken}`);
     expect(meRes.status).toBe(200);
@@ -120,7 +129,7 @@ describe('user', () => {
     testUser.name = updatedName;
   });
   test('list users', async () => {
-    const listUsersRes = await request(app).get('/api/user').set('Authorization', `Bearer ${testUserAuthToken}`);
+    const listUsersRes = await request(app).get('/api/user').set('Authorization', `Bearer ${adminToken}`);
     expect(listUsersRes.status).toBe(200);
   });
 });
