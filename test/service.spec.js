@@ -14,6 +14,19 @@ async function createAdminUser() {
   return user;
 }
 
+async function createDinerUser() {
+  let name = randomName();
+  let user = {
+    password: 'toomanysecrets',
+    roles: [{ role: Role.Diner }],
+    name: name,
+    email: name + '@diner.com'
+  }
+  await DB.addUser(user);
+
+  return user;
+}
+
 // async function createFranchiseeUser() {
 //   let user = { password: 'toomanysecrets', roles: [{ role: Role.Franchisee, object: 'pizzaPocket'  }] };
 //   user.name = randomName();
@@ -130,11 +143,42 @@ describe('user', () => {
   });
   test('list users', async () => {
 
+    const testUsers = []
+    for (let i = 0; i < 10; i++) {
+      const testUser = await createDinerUser();
+      testUsers.push(testUser)
+    }
+
+
     const unauthorizedRes = await request(app).get('/api/user').set('Authorization', `Bearer ${testUserAuthToken}`);
     expect(unauthorizedRes.status).toBe(403);
 
-    const listUsersRes = await request(app).get('/api/user').set('Authorization', `Bearer ${adminToken}`);
+    let listUsersRes = await request(app).get('/api/user').set('Authorization', `Bearer ${adminToken}`);
     expect(listUsersRes.status).toBe(200);
+    expect(listUsersRes.body.users.length).toBe(10);
+    expect(listUsersRes.body.more).toBe(true);
+
+    listUsersRes = await request(app).get(`/api/user?name=${testUsers[0].name}`).set('Authorization', `Bearer ${adminToken}`);
+    expect(listUsersRes.status).toBe(200);
+    expect(listUsersRes.body.users.length).toBe(1);
+    expect(listUsersRes.body.more).toBe(false);
+
+    listUsersRes = await request(app).get(`/api/user?limit=4`).set('Authorization', `Bearer ${adminToken}`);
+    expect(listUsersRes.status).toBe(200);
+    expect(listUsersRes.body.users.length).toBe(4);
+    expect(listUsersRes.body.more).toBe(true);
+
+    const firstPageUserIds = new Set(listUsersRes.body.users.map((u) => u.id));
+
+    listUsersRes = await request(app).get(`/api/user?page=2&limit=4`).set('Authorization', `Bearer ${adminToken}`);
+    expect(listUsersRes.status).toBe(200);
+    expect(listUsersRes.body.users.length).toBe(4);
+    expect(listUsersRes.body.more).toBe(true);
+
+    listUsersRes.body.users.forEach((u) => {
+      expect(firstPageUserIds.has(u.id)).toBe(false);
+    });
+
   });
 });
 

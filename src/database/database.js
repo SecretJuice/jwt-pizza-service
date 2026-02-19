@@ -130,6 +130,59 @@ class DB {
     }
   }
 
+  async getUsers(name = "", page = 1, limit = config.db.listPerPage) {
+    console.log(name, page, limit)
+    const connection = await this.getConnection();
+    try {
+      const offset = this.getOffset(page, limit);
+      const limitPlus = limit + 1;
+      const likeName = name ? `%${name}%` : null;
+      const nameFilter = name ? 'WHERE LOWER(name) LIKE LOWER(?)' : '';
+      const params = name ? [likeName] : [];
+
+      const rows = await this.query(
+        connection,
+        `SELECT u.id, u.email, u.name, ur.role, ur.objectId
+         FROM (
+           SELECT id, email, name
+           FROM user
+           ${nameFilter}
+           ORDER BY id
+           LIMIT ${limitPlus} OFFSET ${offset}
+         ) u
+         LEFT JOIN userRole ur ON ur.userId = u.id
+         ORDER BY u.id`,
+        params
+      );
+
+      const users = [];
+      let currentUserId = null;
+      let more = false;
+
+      for (const row of rows) {
+        if (row.id !== currentUserId) {
+          currentUserId = row.id;
+          if (users.length === limit) {
+            more = true;
+            break;
+          }
+          users.push({ id: row.id, email: row.email, name: row.name, roles: [] });
+        }
+        if (row.role) {
+          users[users.length - 1].roles.push({ role: row.role, objectId: row.objectId || undefined });
+        }
+      }
+
+      return { users, more };
+    } catch (e) {
+      console.error("QUERY FAILED: ", e)
+      throw e
+    } finally {
+      connection.end();
+    }
+
+  }
+
   async getOrders(user, page = 1) {
     const connection = await this.getConnection();
     try {
@@ -281,8 +334,8 @@ class DB {
     }
   }
 
-  getOffset(currentPage = 1, listPerPage) {
-    return (currentPage - 1) * [listPerPage];
+  getOffset(currentPage = 1, listPerPage = config.db.listPerPage) {
+    return (currentPage - 1) * listPerPage;
   }
 
   getTokenSignature(token) {

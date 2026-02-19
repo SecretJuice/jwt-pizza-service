@@ -2,6 +2,7 @@ const express = require('express');
 const { asyncHandler } = require('../endpointHelper.js');
 const { DB, Role } = require('../database/database.js');
 const { authRouter, setAuth } = require('./authRouter.js');
+const { config } = require('../config.js');
 
 const userRouter = express.Router();
 
@@ -86,7 +87,12 @@ userRouter.get(
     if (!user.isRole(Role.Admin)) {
       return res.status(403).json({ message: 'unauthorized' });
     }
-    res.json({ message: 'not implemented', users: [], more: false });
+    const page = Number.parseInt(req.query.page ?? '1', 10);
+    const limit = req.query.limit ? Number.parseInt(req.query.limit, 10) : undefined;
+    const name = req.query.name ?? null;
+    console.log("asdf", page, limit, name);
+    const users = await DB.getUsers(name, page, limit)
+    res.json(users);
   })
 );
 
