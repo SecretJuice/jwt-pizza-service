@@ -131,7 +131,6 @@ class DB {
   }
 
   async getUsers(name = "", page = 1, limit = config.db.listPerPage) {
-    console.log(name, page, limit)
     const connection = await this.getConnection();
     try {
       const offset = this.getOffset(page, limit);

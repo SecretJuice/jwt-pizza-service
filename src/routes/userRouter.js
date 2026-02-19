@@ -90,7 +90,6 @@ userRouter.get(
     const page = Number.parseInt(req.query.page ?? '1', 10);
     const limit = req.query.limit ? Number.parseInt(req.query.limit, 10) : undefined;
     const name = req.query.name ?? null;
-    console.log("asdf", page, limit, name);
     const users = await DB.getUsers(name, page, limit)
     res.json(users);
   })
