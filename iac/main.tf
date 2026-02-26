@@ -127,6 +127,27 @@ resource "aws_ecr_repository" "jwt_pizza_service" {
   name = "jwt-pizza-service"
 }
 
+resource "aws_ecr_lifecycle_policy" "jwt_pizza_service" {
+  repository = aws_ecr_repository.jwt_pizza_service.name
+
+  policy = jsonencode({
+    rules = [
+      {
+        rulePriority = 1
+        description  = "Keep only the latest 2 images"
+        selection = {
+          tagStatus   = "any"
+          countType   = "imageCountMoreThan"
+          countNumber = 2
+        }
+        action = {
+          type = "expire"
+        }
+      }
+    ]
+  })
+}
+
 data "aws_iam_policy_document" "jwt_pizza_service_deploy" {
   statement {
     sid       = "AuthenticateWithECR"
