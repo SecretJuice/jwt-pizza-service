@@ -40,6 +40,8 @@ data "aws_ssm_parameter" "db_password" {
   with_decryption = true
 }
 
+data "aws_caller_identity" "current" {}
+
 resource "aws_security_group" "jwt_pizza_service" {
   name        = "jwt-pizza-service"
   description = "JWT Pizza Service"
@@ -123,4 +125,47 @@ resource "aws_db_instance" "jwt_pizza_service_db" {
 
 resource "aws_ecr_repository" "jwt_pizza_service" {
   name = "jwt-pizza-service"
+}
+
+data "aws_iam_policy_document" "jwt_pizza_service_deploy" {
+  statement {
+    sid       = "AuthenticateWithECR"
+    effect    = "Allow"
+    actions   = ["ecr:GetAuthorizationToken"]
+    resources = ["*"]
+  }
+
+  statement {
+    sid    = "PushToECR"
+    effect = "Allow"
+    actions = [
+      "ecr:BatchGetImage",
+      "ecr:BatchCheckLayerAvailability",
+      "ecr:PutImage",
+      "ecr:InitiateLayerUpload",
+      "ecr:UploadLayerPart",
+      "ecr:CompleteLayerUpload"
+    ]
+    resources = [aws_ecr_repository.jwt_pizza_service.arn]
+  }
+  # todo, remove string resources after creating ecs role and service
+  statement {
+    sid       = "DeployContainer"
+    effect    = "Allow"
+    actions   = ["ecs:UpdateService"]
+    resources = ["arn:aws:ecs:${var.aws_region}:${data.aws_caller_identity.current.account_id}:service/jwt-pizza-service/jwt-pizza-service"]
+  }
+
+  statement {
+    sid       = "PassRolesInTaskDefinition"
+    effect    = "Allow"
+    actions   = ["iam:PassRole"]
+    resources = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/jwt-pizza-ecs"]
+  }
+}
+
+resource "aws_iam_policy" "jwt_pizza_service_deploy" {
+  name        = "jwt-pizza-service-deploy-policy"
+  description = "Allows pushing jwt-pizza-service image to ECR and deploying ECS service."
+  policy      = data.aws_iam_policy_document.jwt_pizza_service_deploy.json
 }
