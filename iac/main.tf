@@ -35,6 +35,11 @@ data "aws_subnets" "selected_vpc" {
   }
 }
 
+data "aws_ssm_parameter" "db_password" {
+  name            = var.db_password_ssm_parameter_name
+  with_decryption = true
+}
+
 resource "aws_security_group" "jwt_pizza_service" {
   name        = "jwt-pizza-service"
   description = "JWT Pizza Service"
@@ -99,7 +104,7 @@ resource "aws_db_instance" "jwt_pizza_service_db" {
   instance_class = "db.t4g.micro"
 
   username = "admin"
-  password = var.db_password
+  password = data.aws_ssm_parameter.db_password.value
 
   iam_database_authentication_enabled = true
 
@@ -114,4 +119,8 @@ resource "aws_db_instance" "jwt_pizza_service_db" {
   multi_az               = false
 
   skip_final_snapshot = true
+}
+
+resource "aws_ecr_repository" "jwt_pizza_service" {
+  name = "jwt-pizza-service"
 }

@@ -16,8 +16,8 @@ variable "vpc_id" {
   default     = ""
 }
 
-variable "db_password" {
-  description = "Master password for the RDS instance"
+variable "db_password_ssm_parameter_name" {
+  description = "SSM Parameter Store name containing the RDS master password (SecureString)"
   type        = string
-  sensitive   = true
+  default     = "/jwt-pizza-service/db/password"
 }
