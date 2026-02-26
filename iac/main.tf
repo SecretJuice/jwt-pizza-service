@@ -20,6 +20,19 @@ resource "aws_default_vpc" "default" {
 
 locals {
   selected_vpc_id = var.vpc_id != "" ? var.vpc_id : aws_default_vpc.default.id
+  # RDS pricing varies by AZ and time; using the first available AZ as a stable low-cost heuristic.
+  selected_availability_zone = sort(data.aws_availability_zones.available.names)[0]
+}
+
+data "aws_availability_zones" "available" {
+  state = "available"
+}
+
+data "aws_subnets" "selected_vpc" {
+  filter {
+    name   = "vpc-id"
+    values = [local.selected_vpc_id]
+  }
 }
 
 resource "aws_security_group" "jwt_pizza_service" {
@@ -72,4 +85,33 @@ resource "aws_security_group" "jwt_pizza_db" {
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
+}
+
+resource "aws_db_subnet_group" "jwt_pizza_db" {
+  name       = "jwt-pizza-service-db-subnet-group"
+  subnet_ids = data.aws_subnets.selected_vpc.ids
+}
+
+resource "aws_db_instance" "jwt_pizza_service_db" {
+  identifier = "jwt-pizza-service-db"
+
+  engine         = "mysql"
+  instance_class = "db.t4g.micro"
+
+  username = "admin"
+  password = var.db_password
+
+  iam_database_authentication_enabled = true
+
+  allocated_storage = 20
+  storage_type      = "gp2"
+  storage_encrypted = true
+
+  publicly_accessible    = false
+  vpc_security_group_ids = [aws_security_group.jwt_pizza_db.id]
+  db_subnet_group_name   = aws_db_subnet_group.jwt_pizza_db.name
+  availability_zone      = local.selected_availability_zone
+  multi_az               = false
+
+  skip_final_snapshot = true
 }
