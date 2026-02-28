@@ -233,3 +233,18 @@ resource "aws_ecs_task_definition" "jwt_pizza_service" {
     }
   ])
 }
+
+resource "aws_ecs_cluster" "jwt_pizza_service" {
+  name = "jwt-pizza-service"
+}
+
+resource "aws_ecs_cluster_capacity_providers" "jwt_pizza_service" {
+  cluster_name = aws_ecs_cluster.jwt_pizza_service.name
+
+  capacity_providers = ["FARGATE"]
+
+  default_capacity_provider_strategy {
+    capacity_provider = "FARGATE"
+    weight            = 1
+  }
+}
