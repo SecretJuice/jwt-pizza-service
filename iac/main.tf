@@ -22,6 +22,7 @@ locals {
   selected_vpc_id = var.vpc_id != "" ? var.vpc_id : aws_default_vpc.default.id
   # RDS pricing varies by AZ and time; using the first available AZ as a stable low-cost heuristic.
   selected_availability_zone = sort(data.aws_availability_zones.available.names)[0]
+  default_vpc_subnet_ids     = slice(sort(data.aws_subnets.default_vpc.ids), 0, 2)
 }
 
 data "aws_availability_zones" "available" {
@@ -32,6 +33,13 @@ data "aws_subnets" "selected_vpc" {
   filter {
     name   = "vpc-id"
     values = [local.selected_vpc_id]
+  }
+}
+
+data "aws_subnets" "default_vpc" {
+  filter {
+    name   = "vpc-id"
+    values = [aws_default_vpc.default.id]
   }
 }
 
@@ -230,6 +238,13 @@ resource "aws_ecs_task_definition" "jwt_pizza_service" {
       name      = "jwt-pizza-service"
       image     = "${aws_ecr_repository.jwt_pizza_service.repository_url}:latest"
       essential = true
+      portMappings = [
+        {
+          containerPort = 80
+          hostPort      = 80
+          protocol      = "tcp"
+        }
+      ]
     }
   ])
 }
@@ -247,4 +262,60 @@ resource "aws_ecs_cluster_capacity_providers" "jwt_pizza_service" {
     capacity_provider = "FARGATE"
     weight            = 1
   }
+}
+
+resource "aws_lb" "jwt_pizza_service" {
+  name               = "jwt-pizza-service"
+  internal           = false
+  load_balancer_type = "application"
+  security_groups    = [aws_security_group.jwt_pizza_service.id]
+  subnets            = local.default_vpc_subnet_ids
+}
+
+resource "aws_lb_target_group" "jwt_pizza_service" {
+  name        = "jwt-pizza-service"
+  port        = 80
+  protocol    = "HTTP"
+  vpc_id      = aws_default_vpc.default.id
+  target_type = "ip"
+
+  health_check {
+    path     = "/api/docs"
+    protocol = "HTTP"
+  }
+}
+
+resource "aws_lb_listener" "jwt_pizza_service_https" {
+  load_balancer_arn = aws_lb.jwt_pizza_service.arn
+  port              = 443
+  protocol          = "HTTPS"
+  certificate_arn   = "arn:aws:acm:us-east-1:423623871024:certificate/328f2a1a-9644-48bf-9bbe-fd88942ecdfd"
+  ssl_policy        = "ELBSecurityPolicy-2016-08"
+
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.jwt_pizza_service.arn
+  }
+}
+
+resource "aws_ecs_service" "jwt_pizza_service" {
+  name            = "jwt-pizza-service"
+  cluster         = aws_ecs_cluster.jwt_pizza_service.id
+  task_definition = aws_ecs_task_definition.jwt_pizza_service.arn
+  desired_count   = 1
+  launch_type     = "FARGATE"
+
+  network_configuration {
+    subnets          = local.default_vpc_subnet_ids
+    security_groups  = [aws_security_group.jwt_pizza_service.id]
+    assign_public_ip = true
+  }
+
+  load_balancer {
+    target_group_arn = aws_lb_target_group.jwt_pizza_service.arn
+    container_name   = "jwt-pizza-service"
+    container_port   = 80
+  }
+
+  depends_on = [aws_lb_listener.jwt_pizza_service_https]
 }
