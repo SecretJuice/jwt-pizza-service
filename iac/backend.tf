@@ -1,17 +1,3 @@
-terraform {
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 6.0"
-    }
-  }
-}
-
-provider "aws" {
-  region  = var.aws_region
-  profile = var.aws_profile
-}
-
 resource "aws_default_vpc" "default" {
   tags = {
     Name = "Default VPC"
@@ -285,11 +271,59 @@ resource "aws_lb_target_group" "jwt_pizza_service" {
   }
 }
 
+resource "aws_acm_certificate" "jwt_pizza_service" {
+  domain_name       = var.service_custom_domain
+  validation_method = "DNS"
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
+resource "cloudflare_dns_record" "service_acm_validation" {
+  for_each = {
+    for dvo in aws_acm_certificate.jwt_pizza_service.domain_validation_options :
+    dvo.domain_name => {
+      name    = dvo.resource_record_name
+      type    = dvo.resource_record_type
+      content = dvo.resource_record_value
+    }
+  }
+
+  zone_id = var.cloudflare_zone_id
+  name    = each.value.name
+  type    = each.value.type
+  content = each.value.content
+  ttl     = 1
+  proxied = false
+}
+
+resource "aws_acm_certificate_validation" "jwt_pizza_service" {
+  certificate_arn = aws_acm_certificate.jwt_pizza_service.arn
+
+  validation_record_fqdns = [
+    for dvo in aws_acm_certificate.jwt_pizza_service.domain_validation_options : dvo.resource_record_name
+  ]
+
+  depends_on = [cloudflare_dns_record.service_acm_validation]
+}
+
+resource "cloudflare_dns_record" "service_custom_domain" {
+  count = var.manage_service_custom_domain_dns ? 1 : 0
+
+  zone_id = var.cloudflare_zone_id
+  name    = var.service_cloudflare_record_name
+  type    = "CNAME"
+  content = aws_lb.jwt_pizza_service.dns_name
+  ttl     = 1
+  proxied = var.service_cloudflare_proxied
+}
+
 resource "aws_lb_listener" "jwt_pizza_service_https" {
   load_balancer_arn = aws_lb.jwt_pizza_service.arn
   port              = 443
   protocol          = "HTTPS"
-  certificate_arn   = "arn:aws:acm:us-east-1:423623871024:certificate/328f2a1a-9644-48bf-9bbe-fd88942ecdfd"
+  certificate_arn   = aws_acm_certificate_validation.jwt_pizza_service.certificate_arn
   ssl_policy        = "ELBSecurityPolicy-2016-08"
 
   default_action {
