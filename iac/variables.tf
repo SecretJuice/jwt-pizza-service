@@ -138,11 +138,23 @@ variable "github_ci_role_name" {
 variable "store_cloudflare_api_token_in_ssm" {
   description = "Whether to store the Cloudflare API token in SSM Parameter Store."
   type        = bool
-  default     = false
+  default     = true
 }
 
 variable "cloudflare_api_token_ssm_parameter_name" {
   description = "SSM parameter name for storing the Cloudflare API token."
   type        = string
   default     = "/jwt-pizza-service/cloudflare/api-token"
+}
+
+variable "store_cloudflare_zone_id_in_ssm" {
+  description = "Whether to store the Cloudflare zone ID in SSM Parameter Store."
+  type        = bool
+  default     = true
+}
+
+variable "cloudflare_zone_id_ssm_parameter_name" {
+  description = "SSM parameter name for storing the Cloudflare zone ID."
+  type        = string
+  default     = "/jwt-pizza-service/cloudflare/zone-id"
 }

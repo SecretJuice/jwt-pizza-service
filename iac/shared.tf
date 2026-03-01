@@ -20,3 +20,12 @@ resource "aws_ssm_parameter" "cloudflare_api_token" {
   type        = "SecureString"
   value       = var.cloudflare_api_token
 }
+
+resource "aws_ssm_parameter" "cloudflare_zone_id" {
+  count = var.store_cloudflare_zone_id_in_ssm ? 1 : 0
+
+  name        = var.cloudflare_zone_id_ssm_parameter_name
+  description = "Cloudflare zone ID used for DNS automation"
+  type        = "String"
+  value       = var.cloudflare_zone_id
+}
