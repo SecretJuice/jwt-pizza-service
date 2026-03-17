@@ -51,6 +51,12 @@ jobs:
               },
               listPerPage: 10,
             },
+             metrics: {
+                source: 'jwt-pizza-service',
+                endpointUrl: '${{ secrets.GRAFANA_URL }}',
+                apiKey: '${{ secrets.GRAFANA_TOKEN }}',
+                accountId: '${{ secrets.GRAFANA_ID }}',
+             },
             factory: {
               url: 'https://pizza-factory.cs329.click',
               apiKey: '${{ secrets.FACTORY_API_KEY }}',
@@ -92,6 +98,12 @@ jobs:
               },
               listPerPage: 10,
             },
+             metrics: {
+                source: 'jwt-pizza-service',
+                endpointUrl: '${{ secrets.GRAFANA_URL }}',
+                apiKey: '${{ secrets.GRAFANA_TOKEN }}',
+                accountId: '${{ secrets.GRAFANA_ID }}',
+             },
             factory: {
               url: 'https://pizza-factory.cs329.click',
               apiKey: '${{ secrets.FACTORY_API_KEY }}',
