@@ -1,6 +1,6 @@
 const config = require('./config');
 const crypto = require('crypto');
-const metricsConfig = config.db.metrics;
+const metricsConfig = config.metrics;
 
 let intervalId;
 
