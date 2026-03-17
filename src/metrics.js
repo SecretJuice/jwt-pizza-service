@@ -1,4 +1,5 @@
 const config = require('./config');
+const crypto = require('crypto');
 const metricsConfig = config.db.metrics;
 
 let intervalId;
@@ -32,19 +33,19 @@ function randomMetricOffset(floor = 1, ceiling = 200) {
 }
 
 function updateMetricsCache() {
-  metrics.requests.get += randomMetricOffset(100, 600);
-  metrics.requests.put += randomMetricOffset();
-  metrics.requests.post += randomMetricOffset();
-  metrics.requests.delete += randomMetricOffset();
-  let increment = (
-    metrics.requests.get +
-    metrics.requests.put +
-    metrics.requests.post +
-    metrics.requests.delete
-  )
-  metrics.requests.total += increment
-
-  metrics.requests.latency += increment * randomMetricOffset();
+  // metrics.requests.get += randomMetricOffset(100, 600);
+  // metrics.requests.put += randomMetricOffset();
+  // metrics.requests.post += randomMetricOffset();
+  // metrics.requests.delete += randomMetricOffset();
+  // let increment = (
+  //   metrics.requests.get +
+  //   metrics.requests.put +
+  //   metrics.requests.post +
+  //   metrics.requests.delete
+  // )
+  // metrics.requests.total += increment
+  //
+  // metrics.requests.latency += increment * randomMetricOffset();
 
   metrics.cpu = randomMetricOffset(40, 50);
   metrics.memory = randomMetricOffset(70, 80);
@@ -149,13 +150,46 @@ function sendMetricToGrafana(metricName, metricValue, type, unit) {
         response.text().then((text) => {
           console.error(`Failed to push metrics data to Grafana: ${text}\n${body}`);
         });
-      } else {
-        console.log(`Pushed ${metricName}`);
-      }
+      } 
     })
     .catch((error) => {
       console.error('Error pushing metrics:', error);
     });
 }
 
-module.exports = { startMetrics, stopMetrics };
+async function requestLogMiddleware(req, res, next) {
+  req.requestId = crypto.randomUUID()
+  let start = Date.now()
+  console.log(`Request Received: time=${start}, path=${req.path}, method=${req.method}, reqId=${req.requestId}`)
+
+  res.on('finish', ()=>{
+    let end = Date.now()
+    let duration = end - start
+    console.log(`Response Issued : time=${end}, status=${res.statusCode}, duration=${duration}ms, reqId=${req.requestId}`)
+
+    metrics.requests.total += 1
+    metrics.requests.latency += duration
+
+    switch(req.method) {
+      case 'GET':
+        metrics.requests.get += 1
+        break;
+      case 'PUT':
+        metrics.requests.put += 1
+        break;
+      case 'POST':
+        metrics.requests.post += 1
+        break;
+      case 'DELETE':
+        metrics.requests.delete += 1
+        break;
+    }
+  
+  })
+
+  await next()
+
+
+}
+
+module.exports = { startMetrics, stopMetrics, requestLogMiddleware };
