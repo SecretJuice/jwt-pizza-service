@@ -2,6 +2,7 @@ const config = require('./config');
 const crypto = require('crypto');
 const metricsConfig = config.metrics;
 const os = require('os');
+const { _router } = require('./service');
 
 let intervalId;
 
@@ -215,4 +216,12 @@ async function reportPizzaSale(success, latency, order) {
   }
 }
 
-module.exports = { startMetrics, stopMetrics, requestLogMiddleware, reportPizzaSale };
+async function reportAuthAttempt(success) {
+  if (success) {
+    metrics.authenticationAttempts.successful += 1
+  } else {
+    metrics.authenticationAttempts.failed += 1
+  }
+}
+
+module.exports = { startMetrics, stopMetrics, requestLogMiddleware, reportPizzaSale, reportAuthAttempt };
