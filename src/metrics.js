@@ -77,8 +77,8 @@ function pipeMetrics() {
   sendMetricToGrafana('requests_post', metrics.requests.post, 'sum', '1');
   sendMetricToGrafana('requests_delete', metrics.requests.delete, 'sum', '1');
 
-  sendMetricToGrafana('service_latency', metrics.requests.latency, 'sum', 'ms');
-  sendMetricToGrafana('pizza_latency', metrics.pizzas.latency, 'sum', 'ms');
+  sendMetricToGrafana('service_latency', metrics.requests.latency, 'sum', '1');
+  sendMetricToGrafana('pizza_latency', metrics.pizzas.latency, 'sum', '1');
   sendMetricToGrafana('pizza_attempts', metrics.pizzas.attempts, 'sum', '1');
 
   // TODO: figure out what to actually put in 'sum'
