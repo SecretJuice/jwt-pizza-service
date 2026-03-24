@@ -2,7 +2,6 @@ const config = require('./config');
 const crypto = require('crypto');
 const metricsConfig = config.metrics;
 const os = require('os');
-const { _router } = require('./service');
 
 let intervalId;
 
