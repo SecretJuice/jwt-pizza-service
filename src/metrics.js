@@ -57,13 +57,13 @@ function updateMetricsCache() {
   // replace with DB query against sessions
   metrics.activeUsers = randomMetricOffset(300, 350);
 
-  metrics.pizzas.latency += randomMetricOffset();
-  metrics.pizzas.sold += randomMetricOffset();
-  metrics.pizzas.created += randomMetricOffset();
-  metrics.pizzas.revenue += randomMetricOffset();
+  // metrics.pizzas.latency += randomMetricOffset();
+  // metrics.pizzas.sold += randomMetricOffset();
+  // metrics.pizzas.created += randomMetricOffset();
+  // metrics.pizzas.revenue += randomMetricOffset();
 
-  metrics.authenticationAttempts.successful += randomMetricOffset();
-  metrics.authenticationAttempts.failed += randomMetricOffset();
+  // metrics.authenticationAttempts.successful += randomMetricOffset();
+  // metrics.authenticationAttempts.failed += randomMetricOffset();
 }
 
 function pipeMetrics() {
@@ -83,12 +83,12 @@ function pipeMetrics() {
   sendMetricToGrafana('active_users', metrics.activeUsers, 'sum', 'ms');
 
 
-  sendMetricToGrafana('pizza_sales', metrics.pizzas.sold, 'sum', 'ms');
-  sendMetricToGrafana('pizza_failures', metrics.pizzas.failed, 'sum', 'ms');
-  sendMetricToGrafana('pizza_revenue', metrics.pizzas.revenue, 'sum', 'ms');
+  sendMetricToGrafana('pizza_sales', metrics.pizzas.sold, 'sum', '1');
+  sendMetricToGrafana('pizza_failures', metrics.pizzas.failed, 'sum', '1');
+  sendMetricToGrafana('pizza_revenue', metrics.pizzas.revenue, 'sum', '1');
 
-  sendMetricToGrafana('auth_success', metrics.authenticationAttempts.successful, 'sum', 'ms');
-  sendMetricToGrafana('auth_failure', metrics.authenticationAttempts.failed, 'sum', 'ms');
+  sendMetricToGrafana('auth_success', metrics.authenticationAttempts.successful, 'sum', '1');
+  sendMetricToGrafana('auth_failure', metrics.authenticationAttempts.failed, 'sum', '1');
 }
 
 function startMetrics() {
