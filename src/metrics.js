@@ -1,6 +1,7 @@
 const config = require('./config');
 const crypto = require('crypto');
 const metricsConfig = config.metrics;
+const os = require('os');
 
 let intervalId;
 
@@ -32,24 +33,28 @@ function randomMetricOffset(floor = 1, ceiling = 200) {
   return Math.floor(Math.random() * (ceiling-floor)) + floor + 1;
 }
 
+
+function getCpuUsagePercentage() {
+  const cpuUsage = os.loadavg()[0] / os.cpus().length;
+  return cpuUsage.toFixed(2) * 100;
+}
+
+function getMemoryUsagePercentage() {
+  const totalMemory = os.totalmem();
+  const freeMemory = os.freemem();
+  const usedMemory = totalMemory - freeMemory;
+  const memoryUsage = (usedMemory / totalMemory) * 100;
+  return memoryUsage.toFixed(2);
+}
+
+
+// Called every set interval to inquire on metrics that are ok to gather once 
+// every two seconds
 function updateMetricsCache() {
-  // metrics.requests.get += randomMetricOffset(100, 600);
-  // metrics.requests.put += randomMetricOffset();
-  // metrics.requests.post += randomMetricOffset();
-  // metrics.requests.delete += randomMetricOffset();
-  // let increment = (
-  //   metrics.requests.get +
-  //   metrics.requests.put +
-  //   metrics.requests.post +
-  //   metrics.requests.delete
-  // )
-  // metrics.requests.total += increment
-  //
-  // metrics.requests.latency += increment * randomMetricOffset();
+  metrics.cpu = getCpuUsagePercentage()
+  metrics.memory = getMemoryUsagePercentage()
 
-  metrics.cpu = randomMetricOffset(40, 50);
-  metrics.memory = randomMetricOffset(70, 80);
-
+  // replace with DB query against sessions
   metrics.activeUsers = randomMetricOffset(300, 350);
 
   metrics.pizzas.latency += randomMetricOffset();
@@ -160,11 +165,13 @@ function sendMetricToGrafana(metricName, metricValue, type, unit) {
 async function requestLogMiddleware(req, res, next) {
   req.requestId = crypto.randomUUID()
   let start = Date.now()
+  // export to graphana
   console.log(`Request Received: time=${start}, path=${req.path}, method=${req.method}, reqId=${req.requestId}`)
 
   res.on('finish', ()=>{
     let end = Date.now()
     let duration = end - start
+    // export to graphana
     console.log(`Response Issued : time=${end}, status=${res.statusCode}, duration=${duration}ms, reqId=${req.requestId}`)
 
     metrics.requests.total += 1
