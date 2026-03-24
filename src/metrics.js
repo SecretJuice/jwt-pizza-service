@@ -23,7 +23,7 @@ let metrics = {
   memory: 0,
   pizzas: {
     sold: 0,
-    created: 0,
+    failed: 0,
     revenue: 0,
     latency: 0
   },
@@ -83,9 +83,9 @@ function pipeMetrics() {
   sendMetricToGrafana('active_users', metrics.activeUsers, 'sum', 'ms');
 
 
-  sendMetricToGrafana('pizzas_sold', metrics.pizzas.sold, 'sum', 'ms');
-  sendMetricToGrafana('pizzas_created', metrics.pizzas.created, 'sum', 'ms');
-  sendMetricToGrafana('revenue', metrics.pizzas.revenue, 'sum', 'ms');
+  sendMetricToGrafana('pizza_sales', metrics.pizzas.sold, 'sum', 'ms');
+  sendMetricToGrafana('pizza_failures', metrics.pizzas.failed, 'sum', 'ms');
+  sendMetricToGrafana('pizza_revenue', metrics.pizzas.revenue, 'sum', 'ms');
 
   sendMetricToGrafana('auth_success', metrics.authenticationAttempts.successful, 'sum', 'ms');
   sendMetricToGrafana('auth_failure', metrics.authenticationAttempts.failed, 'sum', 'ms');
@@ -199,4 +199,20 @@ async function requestLogMiddleware(req, res, next) {
 
 }
 
-module.exports = { startMetrics, stopMetrics, requestLogMiddleware };
+async function reportPizzaSale(success, latency, order) {
+  metrics.pizzas.latency += latency
+  if (success) {
+
+    let price = 0
+    for(var item of order.items) {
+      price += item.price
+    }
+
+    metrics.pizzas.sold += 1
+    metrics.pizzas.revenue += price
+  } else {
+    metrics.pizzas.failed += 1
+  }
+}
+
+module.exports = { startMetrics, stopMetrics, requestLogMiddleware, reportPizzaSale };
