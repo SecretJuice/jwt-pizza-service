@@ -25,7 +25,8 @@ let metrics = {
     sold: 0,
     failed: 0,
     revenue: 0,
-    latency: 0
+    latency: 0,
+    attempts: 0
   },
 }
 
@@ -78,6 +79,7 @@ function pipeMetrics() {
 
   sendMetricToGrafana('service_latency', metrics.requests.latency, 'sum', 'ms');
   sendMetricToGrafana('pizza_latency', metrics.pizzas.latency, 'sum', 'ms');
+  sendMetricToGrafana('pizza_attempts', metrics.pizzas.attempts, 'sum', '1');
 
   // TODO: figure out what to actually put in 'sum'
   sendMetricToGrafana('active_users', metrics.activeUsers, 'sum', 'ms');
@@ -201,6 +203,7 @@ async function requestLogMiddleware(req, res, next) {
 
 async function reportPizzaSale(success, latency, order) {
   metrics.pizzas.latency += latency
+  metrics.pizzas.attempts += 1
   if (success) {
 
     let price = 0
