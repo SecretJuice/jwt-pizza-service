@@ -69,7 +69,7 @@ function pipeMetrics() {
   sendMetricToGrafana('pizza_attempts', metrics.pizzas.attempts, 'sum', '1');
 
   // TODO: figure out what to actually put in 'sum'
-  sendMetricToGrafana('active_users', metrics.activeUsers, 'sum', 'ms');
+  sendMetricToGrafana('active_users', metrics.activeUsers, 'gauge', '1');
 
 
   sendMetricToGrafana('pizza_sales', metrics.pizzas.sold, 'sum', '1');
