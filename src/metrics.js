@@ -51,7 +51,9 @@ async function updateMetricsCache() {
   metrics.cpu = getCpuUsagePercentage()
   metrics.memory = getMemoryUsagePercentage()
 
-  metrics.activeUsers = await DB.getActiveUserCount();
+  let activeUsers = await DB.getActiveUserCount();
+  console.log("ACTIVE USERS: "+activeUsers)
+  metrics.activeUsers = activeUsers
 }
 
 function pipeMetrics() {
