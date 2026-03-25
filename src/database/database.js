@@ -348,7 +348,7 @@ class DB {
   async getActiveUserCount() {
     const connection = await this.getConnection();
     try {
-      const result = await this.query(connection, `SELECT COUNT(*) FROM auth`);
+      const result = await this.query(connection, `SELECT COUNT(*) AS count FROM auth`);
       return Number(result[0].count) 
     } finally {
       connection.end();
