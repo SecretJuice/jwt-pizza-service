@@ -31,11 +31,6 @@ let metrics = {
   },
 }
 
-function randomMetricOffset(floor = 1, ceiling = 200) {
-  return Math.floor(Math.random() * (ceiling-floor)) + floor + 1;
-}
-
-
 function getCpuUsagePercentage() {
   const cpuUsage = os.loadavg()[0] / os.cpus().length;
   return Math.round(cpuUsage.toFixed(2) * 100);
@@ -56,16 +51,7 @@ async function updateMetricsCache() {
   metrics.cpu = getCpuUsagePercentage()
   metrics.memory = getMemoryUsagePercentage()
 
-  // replace with DB query against sessions
   metrics.activeUsers = await DB.getActiveUserCount();
-
-  // metrics.pizzas.latency += randomMetricOffset();
-  // metrics.pizzas.sold += randomMetricOffset();
-  // metrics.pizzas.created += randomMetricOffset();
-  // metrics.pizzas.revenue += randomMetricOffset();
-
-  // metrics.authenticationAttempts.successful += randomMetricOffset();
-  // metrics.authenticationAttempts.failed += randomMetricOffset();
 }
 
 function pipeMetrics() {
