@@ -349,7 +349,7 @@ class DB {
     const connection = await this.getConnection();
     try {
       const result = await this.query(connection, `SELECT COUNT(*) FROM auth`);
-      return result
+      return Number(result[0].count) 
     } finally {
       connection.end();
     }
