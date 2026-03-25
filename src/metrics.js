@@ -2,6 +2,7 @@ const config = require('./config');
 const crypto = require('crypto');
 const metricsConfig = config.metrics;
 const os = require('os');
+const { DB } = require('./database/database.js')
 
 let intervalId;
 
@@ -51,12 +52,12 @@ function getMemoryUsagePercentage() {
 
 // Called every set interval to inquire on metrics that are ok to gather once 
 // every two seconds
-function updateMetricsCache() {
+async function updateMetricsCache() {
   metrics.cpu = getCpuUsagePercentage()
   metrics.memory = getMemoryUsagePercentage()
 
   // replace with DB query against sessions
-  metrics.activeUsers = randomMetricOffset(300, 350);
+  metrics.activeUsers = await DB.getActiveUserCount();
 
   // metrics.pizzas.latency += randomMetricOffset();
   // metrics.pizzas.sold += randomMetricOffset();
@@ -98,8 +99,8 @@ function startMetrics() {
     return intervalId;
   }
 
-  intervalId = setInterval(() => {
-    updateMetricsCache();
+  intervalId = setInterval(async () => {
+    await updateMetricsCache();
     pipeMetrics();
   }, 2000);
 

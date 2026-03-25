@@ -345,6 +345,16 @@ class DB {
     }
   }
 
+  async getActiveUserCount() {
+    const connection = await this.getConnection();
+    try {
+      const result = await this.query(connection, `SELECT COUNT(*) FROM auth`);
+      return result
+    } finally {
+      connection.end();
+    }
+  }
+
   getOffset(currentPage = 1, listPerPage = config.db.listPerPage) {
     return (currentPage - 1) * listPerPage;
   }
