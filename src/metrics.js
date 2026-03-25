@@ -116,6 +116,13 @@ function stopMetrics() {
 }
 
 function sendMetricToGrafana(metricName, metricValue, type, unit) {
+  const numericValue = Number(metricValue);
+  if (!Number.isFinite(numericValue)) {
+    console.error(`Skipping metric ${metricName}: value must be a finite number`);
+    return;
+  }
+
+  const valueField = Number.isInteger(numericValue) ? 'asInt' : 'asDouble';
   const metric = {
     resourceMetrics: [
       {
@@ -128,7 +135,7 @@ function sendMetricToGrafana(metricName, metricValue, type, unit) {
                 [type]: {
                   dataPoints: [
                     {
-                      asInt: metricValue,
+                      [valueField]: numericValue,
                       timeUnixNano: Date.now() * 1000000,
                     },
                   ],
@@ -213,16 +220,21 @@ async function reportPizzaSale(success, latency, order) {
 
     metrics.pizzas.sold += 1
     metrics.pizzas.revenue += price
+
+    console.log(`Pizza Order Sold: Total: ${price} Items: ${order.items.length} Latency: ${latency}`)
   } else {
     metrics.pizzas.failed += 1
+    console.error(`Pizza Order FAILED: Items: ${order.items.length} Latency: ${latency}`)
   }
 }
 
 async function reportAuthAttempt(success) {
   if (success) {
     metrics.authenticationAttempts.successful += 1
+    console.log(`Login attempt: Success`)
   } else {
     metrics.authenticationAttempts.failed += 1
+    console.log(`Login attempt: Fail`)
   }
 }
 
