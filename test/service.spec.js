@@ -336,7 +336,10 @@ describe('franchise', () => {
       .send({ name: franchiseName, admins: [{ email: adminUser.email }] });
     const franchiseId = createRes.body.id;
 
-    const deleteRes = await request(app).delete(`/api/franchise/${franchiseId}`).send();
+    const deleteRes = await request(app)
+      .delete(`/api/franchise/${franchiseId}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send();
     expect(deleteRes.status).toBe(200);
     expect(deleteRes.body).toMatchObject({ message: 'franchise deleted' });
   });
