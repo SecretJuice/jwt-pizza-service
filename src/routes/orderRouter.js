@@ -88,7 +88,7 @@ orderRouter.post(
     });
     const j = await r.json();
     const latency = Date.now() - start
-    console.log(`Pizza Factory Response Received: body=${j}, latency=${latency}, status=${r.status}`)
+    console.log(`Pizza Factory Response Received: body=${JSON.stringify(j)}, latency=${latency}, status=${r.status}`)
     if (r.ok) {
       res.send({ order, followLinkToEndChaos: j.reportUrl, jwt: j.jwt });
       await reportPizzaSale(true, latency, order)
