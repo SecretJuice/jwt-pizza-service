@@ -220,7 +220,8 @@ class DB {
       const orderId = orderResult.insertId;
       for (const item of order.items) {
         const menuId = await this.getID(connection, 'id', item.menuId, 'menu');
-        await this.query(connection, `INSERT INTO orderItem (orderId, menuId, description, price) VALUES (?, ?, ?, ?)`, [orderId, menuId, item.description, item.price]);
+        let price = (await this.query(connection, `SELECT price from menu where id=?`, [menuId]))[0]?.price
+        await this.query(connection, `INSERT INTO orderItem (orderId, menuId, description, price) VALUES (?, ?, ?, ?)`, [orderId, menuId, item.description, price]);
       }
       return { ...order, id: orderId };
     } finally {
