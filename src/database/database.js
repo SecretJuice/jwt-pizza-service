@@ -218,10 +218,14 @@ class DB {
     try {
       const orderResult = await this.query(connection, `INSERT INTO dinerOrder (dinerId, franchiseId, storeId, date) VALUES (?, ?, ?, now())`, [user.id, order.franchiseId, order.storeId]);
       const orderId = orderResult.insertId;
-      for (const item of order.items) {
+      for (let i = 0; i < order.items.length; i++){
+        const item = order.items[i]
         const menuId = await this.getID(connection, 'id', item.menuId, 'menu');
         let price = (await this.query(connection, `SELECT price from menu where id=?`, [menuId]))[0]?.price
+
         await this.query(connection, `INSERT INTO orderItem (orderId, menuId, description, price) VALUES (?, ?, ?, ?)`, [orderId, menuId, item.description, price]);
+
+        order.items[i].price = price
       }
       return { ...order, id: orderId };
     } finally {
